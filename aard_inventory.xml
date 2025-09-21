@@ -23133,6 +23133,61 @@ function SearchAndReturn(query, verbosity)
   return serialize.save_simple(results)
 end
 
+function GetConsumables()
+  local retval = DRL_RET_SUCCESS
+
+  if (not inv.init.initializedActive) then
+    return serialize.save_simple({error = "Plugin not initialized"})
+  end
+
+  if (inv.consume.table == nil) then
+    return serialize.save_simple({error = "Consumable table not initialized"})
+  end
+
+  local consumableItems = {}
+  local totalCount = 0
+
+  -- Process each consumable type
+  for consumeType, entries in pairs(inv.consume.table) do
+    local typeItems = {}
+
+    for _, entry in ipairs(entries) do
+      local count = 0
+
+      -- Count how many of this item we actually have in inventory
+      for objId, itemEntry in pairs(inv.items.table) do
+        local itemLevel = tonumber(inv.items.getStatField(objId, invStatFieldLevel) or "")
+        local itemName  = inv.items.getStatField(objId, invStatFieldName) or ""
+
+        if (entry.level == itemLevel) and (entry.fullName == itemName) and 
+           (not inv.items.isIgnored(objId)) then
+          count = count + 1
+        end
+      end
+
+      local itemData = {
+        type = consumeType,
+        name = entry.name,
+        fullName = entry.fullName,
+        level = entry.level,
+        room = entry.room,
+        available = count
+      }
+      table.insert(typeItems, itemData)
+      totalCount = totalCount + 1
+    end
+
+    consumableItems[consumeType] = typeItems
+  end
+
+  local results = {
+    count = totalCount,
+    consumables = consumableItems
+  }
+
+  return serialize.save_simple(results)
+end
+
 ]]>
 </script>
 

@@ -23096,6 +23096,42 @@ function dbot.version.update.releaseCR()
 
 end -- dbot.version.update.releaseCR
 
+--
+-- Functions that other plugins can call
+--
+
+function SearchAndReturn(query, verbosity)
+  local retval = DRL_RET_SUCCESS
+
+  if (not inv.init.initializedActive) then
+    return serialize.save_simple({error = "Plugin not initialized"})
+  end
+
+  local idArray, searchRetval = inv.items.searchCR(query, false)
+
+  if (searchRetval ~= DRL_RET_SUCCESS) then
+    return serialize.save_simple({error = "Search failed: " .. dbot.retval.getString(searchRetval)})
+  end
+
+  local matchingItems = {}
+
+  for _, objId in ipairs(idArray or {}) do
+    local item = inv.items.getEntry(objId)
+    if item then
+      -- Add the objId to the item data
+      item.objid = objId
+      table.insert(matchingItems, item)
+    end
+  end
+
+  local results = {
+    count = #matchingItems,
+    items = matchingItems,
+    query = query
+  }
+
+  return serialize.save_simple(results)
+end
 
 ]]>
 </script>
